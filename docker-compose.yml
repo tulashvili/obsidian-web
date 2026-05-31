@@ -1,0 +1,31 @@
+services:
+  app:
+    build: .
+    container_name: obsidian-secure
+    ports:
+      - "127.0.0.1:8080:8080"   # только локальный доступ
+    environment:
+      # Источник истины (git).
+      OSA_REPO_URL: "${OSA_REPO_URL:-}"
+      OSA_REPO_BRANCH: "${OSA_REPO_BRANCH:-main}"
+      # HTTPS-репо: токен. SSH-репо: используйте OSA_GIT_SSH_KEY_HOST ниже.
+      OSA_GIT_USERNAME: "${OSA_GIT_USERNAME:-git}"
+      OSA_GIT_TOKEN: "${OSA_GIT_TOKEN:-}"
+      OSA_ASSET_CACHE: "${OSA_ASSET_CACHE:-268435456}"
+      # entrypoint скопирует этот ключ и выставит OSA_GIT_SSH_KEY.
+      OSA_GIT_SSH_KEY_SRC: "${OSA_GIT_SSH_KEY_HOST:+/keys/git_key}"
+    volumes:
+      # Постоянный том: ТОЛЬКО зашифрованные данные. Named volume наследует
+      # владельца (uid 10001) из образа — без проблем с правами bind-mount.
+      - vault-data:/data
+      # SSH-ключ для приватного git по SSH (read-only). Монтируется, только если
+      # OSA_GIT_SSH_KEY_HOST задан в .env.
+      - "${OSA_GIT_SSH_KEY_HOST:-/dev/null}:/keys/git_key:ro"
+    tmpfs:
+      # Рабочее дерево git живёт в RAM и исчезает при остановке контейнера.
+      # Plaintext на диск не попадает. Увеличьте size при больших assets.
+      - /work:size=2g,mode=1700
+    restart: unless-stopped
+
+volumes:
+  vault-data:

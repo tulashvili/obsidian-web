@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Obsidian Secure</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <!-- Экран разблокировки -->
+  <div id="lock" class="lock-screen">
+    <form id="unlock-form" class="unlock-box">
+      <h1>🔒 Obsidian Secure</h1>
+      <p id="lock-hint">Введите мастер-пароль для расшифровки хранилища.</p>
+      <input id="password" type="password" placeholder="Мастер-пароль" autocomplete="current-password" autofocus />
+      <button type="submit">Разблокировать</button>
+      <div id="lock-error" class="error"></div>
+    </form>
+  </div>
+
+  <!-- Основной интерфейс -->
+  <div id="app" class="app hidden">
+    <aside class="sidebar">
+      <div class="toolbar">
+        <button id="sync-btn" title="Синхронизировать с git">⟳ Обновить</button>
+        <span id="sync-status" class="sync-status"></span>
+      </div>
+      <input id="search" type="search" placeholder="Поиск…" />
+      <div id="search-results" class="search-results hidden"></div>
+      <nav id="tree" class="tree"></nav>
+    </aside>
+    <main class="content">
+      <header class="content-header">
+        <span id="current-path" class="current-path"></span>
+        <div class="actions">
+          <button id="edit-btn" class="hidden">✎ Редактировать</button>
+          <button id="save-btn" class="hidden">💾 Сохранить</button>
+          <button id="cancel-btn" class="hidden">Отмена</button>
+        </div>
+      </header>
+      <article id="view" class="view markdown-body"></article>
+      <textarea id="editor" class="editor hidden" spellcheck="false"></textarea>
+      <section id="backlinks" class="backlinks"></section>
+    </main>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

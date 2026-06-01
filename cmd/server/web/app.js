@@ -56,8 +56,23 @@ async function init() {
 }
 
 // --- Дерево файлов ---
+// allFiles — плоский список всех файлов; используется автодополнением [[ссылок]].
+let allFiles = [];
+
+function flattenTree(node, acc) {
+  if (!node.isDir && node.path) acc.push({ path: node.path, name: noteName(node.path) });
+  (node.children || []).forEach((c) => flattenTree(c, acc));
+}
+
+// noteName — basename без расширения .md (то, как Obsidian резолвит [[Имя]]).
+function noteName(p) {
+  return p.split("/").pop().replace(/\.md$/i, "");
+}
+
 async function loadTree() {
   const root = await api.get("/api/tree");
+  allFiles = [];
+  flattenTree(root, allFiles);
   const el = $("#tree");
   el.innerHTML = "";
   if (root.children) root.children.forEach((c) => el.appendChild(renderNode(c)));
@@ -101,14 +116,14 @@ function markActive(path) {
 // --- Открытие файла ---
 async function openFile(path) {
   state.editing = false;
+  destroyEditor();
   const data = await api.get("/api/file?path=" + encodeURIComponent(path));
   state.current = data;
   $("#current-path").textContent = path;
   markActive(path);
 
   const view = $("#view");
-  const editor = $("#editor");
-  editor.classList.add("hidden");
+  $("#editor-host").classList.add("hidden");
   view.classList.remove("hidden");
   $("#save-btn").classList.add("hidden");
   $("#cancel-btn").classList.add("hidden");
@@ -161,22 +176,59 @@ function renderBacklinks(backlinks) {
   el.querySelectorAll(".bl").forEach((d) => d.addEventListener("click", () => openFile(d.dataset.path)));
 }
 
-// --- Редактирование ---
+// --- Редактирование (CodeMirror 6, live-preview как в Obsidian) ---
+let cmEditor = null;
+
+function destroyEditor() {
+  if (cmEditor) { cmEditor.destroy(); cmEditor = null; }
+  const host = $("#editor-host");
+  host.innerHTML = "";
+  host.classList.add("hidden");
+}
+
+// resolveTarget повторяет логику бэкенда: [[Имя]] -> путь файла ("" если нет).
+// Используется редактором для рендера wiki-ссылок и встраивания картинок.
+function resolveTarget(target) {
+  if (!target) return "";
+  const t = target.toLowerCase().trim();
+  if (t.includes("/")) {
+    const direct = allFiles.find(
+      (f) => f.path.toLowerCase() === t || f.path.toLowerCase() === t + ".md"
+    );
+    return direct ? direct.path : "";
+  }
+  const base = t.replace(/\.[^/.]+$/, "");
+  const cands = allFiles.filter((f) => f.name.toLowerCase() === base);
+  if (!cands.length) return "";
+  const md = cands.find((f) => /\.md$/i.test(f.path)); // предпочитаем markdown
+  return (md || cands[0]).path;
+}
+
 $("#edit-btn").addEventListener("click", () => {
   if (!state.current || state.current.type !== "markdown") return;
+  if (!window.OSAEditorModule) { alert("Редактор не загрузился (cm.js)"); return; }
   state.editing = true;
-  $("#editor").value = state.current.raw;
-  $("#editor").classList.remove("hidden");
+  const host = $("#editor-host");
+  host.classList.remove("hidden");
+  host.innerHTML = "";
   $("#view").classList.add("hidden");
   $("#edit-btn").classList.add("hidden");
   $("#save-btn").classList.remove("hidden");
   $("#cancel-btn").classList.remove("hidden");
+  cmEditor = window.OSAEditorModule.mount(host, {
+    doc: state.current.raw,
+    getFiles: () => allFiles,
+    resolve: resolveTarget,
+    onLinkClick: (p) => openFile(p),
+  });
+  cmEditor.focus();
 });
 
 $("#cancel-btn").addEventListener("click", () => openFile(state.current.path));
 
 $("#save-btn").addEventListener("click", async () => {
-  const content = $("#editor").value;
+  if (!cmEditor) return;
+  const content = cmEditor.getValue();
   const path = state.current.path;
   const { ok, data } = await api.post("/api/save", { path, content });
   if (!ok) { alert(data.error || "Ошибка сохранения"); return; }
@@ -197,6 +249,27 @@ $("#sync-btn").addEventListener("click", async () => {
 });
 
 function setSyncStatus(s) { $("#sync-status").textContent = s; }
+
+// --- Создание новой заметки ---
+$("#new-btn").addEventListener("click", async () => {
+  let name = prompt("Имя новой заметки (можно с папкой, напр. Папка/Заметка):");
+  if (name == null) return;
+  name = name.trim();
+  if (!name) return;
+  // Если расширение не указано — это markdown-заметка.
+  if (!/\.[^/]+$/.test(name)) name += ".md";
+  if (allFiles.some((f) => f.path.toLowerCase() === name.toLowerCase())) {
+    alert("Файл с таким путём уже существует");
+    return;
+  }
+  const content = `# ${noteName(name)}\n`;
+  const { ok, data } = await api.post("/api/save", { path: name, content });
+  if (!ok) { alert(data.error || "Ошибка создания"); return; }
+  await loadTree();
+  await openFile(name);
+  // Сразу открываем в режиме редактирования.
+  $("#edit-btn").click();
+});
 
 // --- Поиск ---
 let searchTimer;

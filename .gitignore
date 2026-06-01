@@ -2,3 +2,5 @@
 .env
 /out/
 *.tmp
+/editor/node_modules/
+*.swp

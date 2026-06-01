@@ -23,6 +23,7 @@
     <aside class="sidebar">
       <div class="toolbar">
         <button id="sync-btn" title="Синхронизировать с git">⟳ Обновить</button>
+        <button id="new-btn" title="Создать новую заметку">＋ Заметка</button>
         <span id="sync-status" class="sync-status"></span>
       </div>
       <input id="search" type="search" placeholder="Поиск…" />
@@ -39,11 +40,12 @@
         </div>
       </header>
       <article id="view" class="view markdown-body"></article>
-      <textarea id="editor" class="editor hidden" spellcheck="false"></textarea>
+      <div id="editor-host" class="editor-host hidden"></div>
       <section id="backlinks" class="backlinks"></section>
     </main>
   </div>
 
+  <script src="/cm.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

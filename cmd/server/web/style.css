@@ -76,7 +76,8 @@ body {
 .actions button { background: var(--bg-hover); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; cursor: pointer; margin-left: 6px; }
 
 .view { overflow-y: auto; padding: 24px 40px; flex: 1; line-height: 1.6; }
-.editor { flex: 1; margin: 0; padding: 24px 40px; background: var(--bg); color: var(--text); border: none; resize: none; font-family: "JetBrains Mono", monospace; font-size: 14px; line-height: 1.6; outline: none; }
+.editor-host { flex: 1; overflow: hidden; display: flex; background: var(--bg); }
+.editor-host .cm-editor { width: 100%; height: 100%; }
 
 .backlinks { border-top: 1px solid var(--border); padding: 12px 40px; max-height: 30%; overflow-y: auto; background: var(--bg-alt); }
 .backlinks h3 { font-size: 13px; color: var(--text-dim); margin: 0 0 8px; text-transform: uppercase; letter-spacing: .05em; }
@@ -96,3 +97,30 @@ body {
 .markdown-body blockquote { border-left: 3px solid var(--accent); margin: 0; padding-left: 14px; color: var(--text-dim); }
 .markdown-body table { border-collapse: collapse; }
 .markdown-body th, .markdown-body td { border: 1px solid var(--border); padding: 6px 10px; }
+
+/* --- Live-preview редактор (CodeMirror 6) --- */
+/* Заголовки: декорации строк .cm-h1 .. .cm-h6 */
+.cm-editor .cm-h1 { font-size: 1.9em; font-weight: 700; line-height: 1.3; }
+.cm-editor .cm-h2 { font-size: 1.6em; font-weight: 700; line-height: 1.3; }
+.cm-editor .cm-h3 { font-size: 1.35em; font-weight: 700; }
+.cm-editor .cm-h4 { font-size: 1.18em; font-weight: 700; }
+.cm-editor .cm-h5 { font-size: 1.05em; font-weight: 700; }
+.cm-editor .cm-h6 { font-size: 1em; font-weight: 700; color: var(--text-dim); }
+
+/* Инлайн-форматирование */
+.cm-editor .cm-strong { font-weight: 700; }
+.cm-editor .cm-em { font-style: italic; }
+.cm-editor .cm-strike { text-decoration: line-through; color: var(--text-dim); }
+.cm-editor .cm-inline-code {
+  background: var(--bg-alt); border-radius: 4px; padding: 1px 5px;
+  font-family: "JetBrains Mono", ui-monospace, monospace; font-size: .9em; color: #c8b3ff;
+}
+
+/* Встроенные [[wiki-ссылки]] как пилюли */
+.cm-editor .cm-wikilink {
+  color: var(--accent); text-decoration: none; cursor: pointer;
+  border-bottom: 1px solid rgba(124, 108, 255, .4);
+}
+.cm-editor .cm-wikilink:hover { border-bottom-style: solid; background: rgba(124, 108, 255, .12); }
+.cm-editor .cm-wikilink-missing { color: var(--missing); border-bottom-color: rgba(194, 91, 91, .5); cursor: default; }
+.cm-editor .cm-embed-img { max-width: 100%; border-radius: 6px; display: block; margin: 4px 0; }

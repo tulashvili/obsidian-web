@@ -6,3 +6,4 @@ docker-compose.yaml
 *.tmp
 /editor/node_modules/
 *.swp
+.claude

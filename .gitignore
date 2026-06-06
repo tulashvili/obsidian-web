@@ -1,5 +1,7 @@
 /vault-data/
 .env
+docker-compose.yml
+docker-compose.yaml
 /out/
 *.tmp
 /editor/node_modules/

@@ -1,3 +1,5 @@
+# Скопируйте в docker-compose.yml и при необходимости скорректируйте.
+# Секреты задаются в .env (скопируйте из .env.example).
 services:
   app:
     build: .

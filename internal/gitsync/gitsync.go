@@ -173,12 +173,17 @@ func (s *Syncer) run(ctx context.Context, work string, args ...string) error {
 func (s *Syncer) cmd(ctx context.Context, work string, args ...string) *exec.Cmd {
 	cmd := exec.CommandContext(ctx, "git", args...)
 	cmd.Dir = work
+	// StrictHostKeyChecking=accept-new — принимаем ключ хоста при первом
+	// подключении (без интерактивного подтверждения внутри контейнера),
+	// но отклоняем изменившиеся ключи (защита от MITM).
+	sshCmd := "ssh -o StrictHostKeyChecking=accept-new"
+	if s.cfg.GitSSHKeyPath != "" {
+		sshCmd += " -i " + s.cfg.GitSSHKeyPath
+	}
 	env := append(os.Environ(),
 		"GIT_TERMINAL_PROMPT=0", // не зависать на запросе пароля
+		"GIT_SSH_COMMAND="+sshCmd,
 	)
-	if s.cfg.GitSSHKeyPath != "" {
-		env = append(env, "GIT_SSH_COMMAND=ssh -i "+s.cfg.GitSSHKeyPath+" -o StrictHostKeyChecking=accept-new")
-	}
 	cmd.Env = env
 	return cmd
 }
